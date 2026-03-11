@@ -2,6 +2,7 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 
+# Load environment variables from .env
 load_dotenv()
 
 def get_connection():
