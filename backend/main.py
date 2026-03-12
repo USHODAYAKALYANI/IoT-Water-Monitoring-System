@@ -3,12 +3,12 @@ import numpy as np
 
 app = FastAPI()
 
-# Dummy ML model simulation
+# Dummy ML prediction function
 def dummy_predict(distance, temperature):
     activities = ["no_activity", "shower", "faucet", "toilet", "dishwasher"]
-    
+
     index = int(distance + temperature) % len(activities)
-    
+
     prediction = activities[index]
     confidence = round(np.random.uniform(0.7, 0.95), 2)
 
@@ -70,4 +70,5 @@ def prediction_history():
                 "confidence": 0.87
             }
         ]
-    }
+    }}
+
