@@ -1,9 +1,32 @@
 from fastapi import FastAPI
+import psycopg2
+import os
+from dotenv import load_dotenv
 import numpy as np
+
+# Load environment variables
+load_dotenv()
 
 app = FastAPI()
 
-# Dummy ML prediction function
+# ---------------------------
+# Database Connection
+# ---------------------------
+def get_connection():
+    conn = psycopg2.connect(
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT"),
+        database=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        sslmode=os.getenv("DB_SSLMODE")
+    )
+    return conn
+
+
+# ---------------------------
+# Dummy ML Prediction
+# ---------------------------
 def dummy_predict(distance, temperature):
     activities = ["no_activity", "shower", "faucet", "toilet", "dishwasher"]
 
@@ -15,11 +38,17 @@ def dummy_predict(distance, temperature):
     return prediction, confidence
 
 
+# ---------------------------
+# Root API
+# ---------------------------
 @app.get("/")
 def root():
     return {"message": "IoT Water Monitoring Backend Running"}
 
 
+# ---------------------------
+# Prediction API
+# ---------------------------
 @app.post("/api/v1/predict")
 def predict_water_activity(data: dict):
 
@@ -34,6 +63,9 @@ def predict_water_activity(data: dict):
     }
 
 
+# ---------------------------
+# Model Info API
+# ---------------------------
 @app.get("/api/v1/model-info")
 def model_info():
 
@@ -52,6 +84,9 @@ def model_info():
     }
 
 
+# ---------------------------
+# Predictions History API
+# ---------------------------
 @app.get("/api/v1/predictions-history")
 def prediction_history():
 
@@ -70,5 +105,5 @@ def prediction_history():
                 "confidence": 0.87
             }
         ]
-    }}
+    }
 
