@@ -1,109 +1,122 @@
+import random
+from datetime import datetime
 from fastapi import FastAPI
-import psycopg2
-import os
-from dotenv import load_dotenv
-import numpy as np
-
-# Load environment variables
-load_dotenv()
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 app = FastAPI()
 
-# ---------------------------
-# Database Connection
-# ---------------------------
-def get_connection():
-    conn = psycopg2.connect(
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
-        database=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        sslmode=os.getenv("DB_SSLMODE")
-    )
-    return conn
+# Allow React frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+prediction_history = []
+
+class PredictionInput(BaseModel):
+    distance: float
+    temperature: float
 
 
-# ---------------------------
-# Dummy ML Prediction
-# ---------------------------
-def dummy_predict(distance, temperature):
-    activities = ["no_activity", "shower", "faucet", "toilet", "dishwasher"]
+# -----------------------------
+# Activity prediction logic
+# -----------------------------
+def predict_activity(distance, temperature):
 
-    index = int(distance + temperature) % len(activities)
+    if distance > 90 and temperature < 25:
+        activity = "no_activity"
 
-    prediction = activities[index]
-    confidence = round(np.random.uniform(0.7, 0.95), 2)
+    elif distance < 40 and temperature > 25:
+        activity = "shower"
 
-    return prediction, confidence
+    elif distance < 30:
+        activity = "faucet"
+
+    elif distance < 20:
+        activity = "toilet"
+
+    else:
+        activity = "dishwasher"
+
+    confidence = round(random.uniform(0.85, 0.98), 2)
+
+    return activity, confidence
 
 
-# ---------------------------
-# Root API
-# ---------------------------
-@app.get("/")
-def root():
-    return {"message": "IoT Water Monitoring Backend Running"}
-
-
-# ---------------------------
-# Prediction API
-# ---------------------------
+# -----------------------------
+# Manual prediction API
+# -----------------------------
 @app.post("/api/v1/predict")
-def predict_water_activity(data: dict):
+def predict(data: PredictionInput):
 
-    distance = data["distance"]
-    temperature = data["temperature"]
+    prediction, confidence = predict_activity(
+        data.distance,
+        data.temperature
+    )
 
-    prediction, confidence = dummy_predict(distance, temperature)
-
-    return {
+    record = {
+        "distance": data.distance,
+        "temperature": data.temperature,
         "prediction": prediction,
-        "confidence": confidence
+        "confidence": confidence,
+        "time": datetime.now().strftime("%H:%M:%S")
     }
 
+    prediction_history.append(record)
 
-# ---------------------------
-# Model Info API
-# ---------------------------
-@app.get("/api/v1/model-info")
-def model_info():
+    return record
 
-    return {
-        "model_type": "LSTM",
-        "version": "1.0",
-        "accuracy": 0.85,
-        "last_trained": "2026-03-10",
-        "classes": [
-            "no_activity",
-            "shower",
-            "faucet",
-            "toilet",
-            "dishwasher"
-        ]
+
+# -----------------------------
+# Auto sensor + tank calculation
+# -----------------------------
+@app.get("/api/v1/auto-predict")
+def auto_predict():
+
+    distance = round(random.uniform(10, 90), 2)
+    temperature = round(random.uniform(20, 35), 2)
+
+    tank_height = 100
+    tank_length = 100
+    tank_width = 100
+
+    water_level = tank_height - distance
+
+    if water_level < 0:
+        water_level = 0
+
+    volume_cm3 = water_level * tank_length * tank_width
+    volume_liters = round(volume_cm3 / 1000, 2)
+
+    prediction, confidence = predict_activity(distance, temperature)
+
+    record = {
+        "distance": distance,
+        "temperature": temperature,
+        "water_level": water_level,
+        "volume_liters": volume_liters,
+        "prediction": prediction,
+        "confidence": confidence,
+        "time": datetime.now().strftime("%H:%M:%S")
     }
 
+    prediction_history.append(record)
 
-# ---------------------------
-# Predictions History API
-# ---------------------------
-@app.get("/api/v1/predictions-history")
-def prediction_history():
+    return record
 
-    return {
-        "history": [
-            {
-                "distance": 25,
-                "temperature": 28,
-                "prediction": "shower",
-                "confidence": 0.91
-            },
-            {
-                "distance": 30,
-                "temperature": 27,
-                "prediction": "faucet",
-                "confidence": 0.87
-            }
-        ]
-    }
 
+# -----------------------------
+# Prediction history
+# -----------------------------
+@app.get("/api/v1/history")
+def history():
+    return prediction_history
+
+
+@app.get("/")
+def home():
+    return {"message": "IoT Water Monitoring Backend Running"}
