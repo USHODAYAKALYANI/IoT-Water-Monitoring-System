@@ -15,6 +15,13 @@ import {
 
 import logo from "../assets/logo.png";
 
+/* -----------------------------
+BACKEND URL
+----------------------------- */
+
+const API_BASE =
+  "https://iot-water-monitoring-system-backend.onrender.com/api/v1";
+
 
 /* -----------------------------
 Tank Visualization Component
@@ -102,14 +109,13 @@ function Prediction() {
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AA00FF"];
 
 
-
   /* -----------------------------
   Manual Prediction
   ----------------------------- */
 
   const predict = async () => {
 
-    const res = await fetch("http://127.0.0.1:8000/api/v1/predict", {
+    const res = await fetch(`${API_BASE}/predict`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -127,19 +133,17 @@ function Prediction() {
   };
 
 
-
   /* -----------------------------
   Load Prediction History
   ----------------------------- */
 
   const loadHistory = async () => {
 
-    const res = await fetch("http://127.0.0.1:8000/api/v1/history");
+    const res = await fetch(`${API_BASE}/history`);
     const data = await res.json();
 
     setHistory(data);
   };
-
 
 
   /* -----------------------------
@@ -148,7 +152,7 @@ function Prediction() {
 
   const loadSensor = async () => {
 
-    const res = await fetch("http://127.0.0.1:8000/api/v1/auto-predict");
+    const res = await fetch(`${API_BASE}/auto-predict`);
     const data = await res.json();
 
     setSensorData(prev => [
@@ -166,7 +170,6 @@ function Prediction() {
   };
 
 
-
   useEffect(() => {
 
     loadHistory();
@@ -179,7 +182,6 @@ function Prediction() {
     return () => clearInterval(interval);
 
   }, []);
-
 
 
   return (
@@ -212,7 +214,6 @@ function Prediction() {
       </div>
 
 
-
       {/* -----------------------------
       Input Section
       ----------------------------- */}
@@ -234,7 +235,6 @@ function Prediction() {
       <button onClick={predict}>Predict</button>
 
 
-
       {/* -----------------------------
       Prediction Result
       ----------------------------- */}
@@ -246,7 +246,6 @@ function Prediction() {
 
           <p>Activity: {prediction.prediction}</p>
           <p>Confidence: {prediction.confidence}</p>
-
 
           <h3>Tank Status</h3>
 
@@ -263,7 +262,6 @@ function Prediction() {
 
         </div>
       )}
-
 
 
       {/* -----------------------------
@@ -283,7 +281,6 @@ function Prediction() {
           <Line type="monotone" dataKey="temperature" stroke="#82ca9d" />
         </LineChart>
       </ResponsiveContainer>
-
 
 
       {/* -----------------------------
@@ -315,7 +312,6 @@ function Prediction() {
           ))}
         </tbody>
       </table>
-
 
 
       {/* -----------------------------
