@@ -1,12 +1,14 @@
 import random
 from datetime import datetime
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 app = FastAPI()
 
-# Allow React frontend
+
+# Allow frontend requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,32 +17,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 prediction_history = []
 
+
+# -----------------------------
+# Request Model
+# -----------------------------
 class PredictionInput(BaseModel):
     distance: float
     temperature: float
 
 
 # -----------------------------
-# Activity prediction logic
+# Activity Prediction Logic
 # -----------------------------
 def predict_activity(distance, temperature):
 
-    if distance > 90 and temperature < 25:
+    if distance > 80:
         activity = "no_activity"
 
-    elif distance < 40 and temperature > 25:
-        activity = "shower"
+    elif distance > 60:
+        activity = "dishwasher"
 
-    elif distance < 30:
+    elif distance > 40:
         activity = "faucet"
 
-    elif distance < 20:
+    elif distance > 20:
         activity = "toilet"
 
     else:
-        activity = "dishwasher"
+        activity = "shower"
 
     confidence = round(random.uniform(0.85, 0.98), 2)
 
@@ -48,7 +55,7 @@ def predict_activity(distance, temperature):
 
 
 # -----------------------------
-# Manual prediction API
+# Manual Prediction API
 # -----------------------------
 @app.post("/api/v1/predict")
 def predict(data: PredictionInput):
@@ -72,7 +79,7 @@ def predict(data: PredictionInput):
 
 
 # -----------------------------
-# Auto sensor + tank calculation
+# Auto Sensor Simulation
 # -----------------------------
 @app.get("/api/v1/auto-predict")
 def auto_predict():
@@ -110,13 +117,16 @@ def auto_predict():
 
 
 # -----------------------------
-# Prediction history
+# Prediction History API
 # -----------------------------
 @app.get("/api/v1/history")
 def history():
     return prediction_history
 
 
+# -----------------------------
+# Root API
+# -----------------------------
 @app.get("/")
 def home():
     return {"message": "IoT Water Monitoring Backend Running"}
