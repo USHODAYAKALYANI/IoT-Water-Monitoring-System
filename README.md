@@ -53,15 +53,27 @@ npm install
 npm start
 
 -Frontend runs at:
+
 http://localhost:3000
+
 SYSTEM WORKFLOW:
+
 -User enters sensor values (distance & temperature) and sensor readings sent periodically.
+
 -Frontend sends the data to the backend API.
+
 -Backend processes the data and predicts the activity.
+
 -The result is returned to the dashboard.
+
 -The dashboard updates graphs, tank visualization, and history.
 
 
+
+
+
 AUTHOR
+
 Ushodaya Kalyani K
-Electrical and Electronics Engineering
+
+
