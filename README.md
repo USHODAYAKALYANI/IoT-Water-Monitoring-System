@@ -33,35 +33,35 @@ Version Control:
 
 Project Structure:
 
+-Running the Project Locally
 
-Running the Project Locally
-Start Backend
+-Start Backend
 
 cd backend
 pip install -r requirements.txt
 python -m uvicorn main:app --reload
+-
 Backend runs at:
-
-http://127.0.0.1:8000
+{http://127.0.0.1:8000}
 API documentation:
+{http://127.0.0.1:8000/docs}
 
-http://127.0.0.1:8000/docs
-Start Frontend
+-Start Frontend
 
 cd frontend
 npm install
 npm start
-Frontend runs at:
 
+-Frontend runs at:
 http://localhost:3000
-System Workflow
-User enters sensor values (distance & temperature).
-Frontend sends the data to the backend API.
-Backend processes the data and predicts the activity.
-The result is returned to the dashboard.
-The dashboard updates graphs, tank visualization, and history.
-Real-Life Use Case
-In a real system, water sensors placed in a tank could monitor water levels and usage patterns. The dashboard could help detect activities such as shower usage, faucet usage, or abnormal water consumption.
-Author
+SYSTEM WORKFLOW:
+-User enters sensor values (distance & temperature) and sensor readings sent periodically.
+-Frontend sends the data to the backend API.
+-Backend processes the data and predicts the activity.
+-The result is returned to the dashboard.
+-The dashboard updates graphs, tank visualization, and history.
+
+
+AUTHOR
 Ushodaya Kalyani K
 Electrical and Electronics Engineering
