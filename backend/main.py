@@ -1,14 +1,19 @@
-import random
-from datetime import datetime
-
+import joblib
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from datetime import datetime
 
+# ==============================
+# LOAD MODEL
+# ==============================
+model = joblib.load("water_model.pkl")
+
+# ==============================
+# FASTAPI INIT
+# ==============================
 app = FastAPI()
 
-
-# Allow frontend requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,116 +22,97 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-prediction_history = []
-
-
-# -----------------------------
-# Request Model
-# -----------------------------
+# ==============================
+# REQUEST MODEL
+# ==============================
 class PredictionInput(BaseModel):
     distance: float
     temperature: float
 
 
-# -----------------------------
-# Activity Prediction Logic
-# -----------------------------
-def predict_activity(distance, temperature):
-
-    if distance > 80:
-        activity = "no_activity"
-
-    elif distance > 60:
-        activity = "dishwasher"
-
-    elif distance > 40:
-        activity = "faucet"
-
-    elif distance > 20:
-        activity = "toilet"
-
-    else:
-        activity = "shower"
-
-    confidence = round(random.uniform(0.85, 0.98), 2)
-
-    return activity, confidence
+# ==============================
+# HISTORY STORAGE (TEMP)
+# ==============================
+prediction_history = []
 
 
-# -----------------------------
-# Manual Prediction API
-# -----------------------------
+# ==============================
+# PREDICTION API (AI MODEL)
+# ==============================
 @app.post("/api/v1/predict")
 def predict(data: PredictionInput):
 
-    prediction, confidence = predict_activity(
-        data.distance,
-        data.temperature
-    )
+    # Prepare input
+    input_data = [[data.distance, data.temperature]]
 
-    record = {
+    # AI Prediction
+    prediction = model.predict(input_data)[0]
+    confidence = max(model.predict_proba(input_data)[0])
+
+    # Tank Logic
+    tank_height = 100  # cm
+    water_level = tank_height - data.distance
+    water_level = max(0, water_level)
+
+    volume_liters = water_level * 10
+
+    result = {
+        "time": datetime.now().strftime("%H:%M:%S"),
         "distance": data.distance,
         "temperature": data.temperature,
         "prediction": prediction,
-        "confidence": confidence,
-        "time": datetime.now().strftime("%H:%M:%S")
+        "confidence": round(confidence, 2),
+        "water_level": round(water_level, 2),
+        "volume_liters": round(volume_liters, 2)
     }
 
-    prediction_history.append(record)
+    # Save history
+    prediction_history.append(result)
 
-    return record
-
-
-# -----------------------------
-# Auto Sensor Simulation
-# -----------------------------
-@app.get("/api/v1/auto-predict")
-def auto_predict():
-
-    distance = round(random.uniform(10, 90), 2)
-    temperature = round(random.uniform(20, 35), 2)
-
-    tank_height = 100
-    tank_length = 100
-    tank_width = 100
-
-    water_level = tank_height - distance
-
-    if water_level < 0:
-        water_level = 0
-
-    volume_cm3 = water_level * tank_length * tank_width
-    volume_liters = round(volume_cm3 / 1000, 2)
-
-    prediction, confidence = predict_activity(distance, temperature)
-
-    record = {
-        "distance": distance,
-        "temperature": temperature,
-        "water_level": water_level,
-        "volume_liters": volume_liters,
-        "prediction": prediction,
-        "confidence": confidence,
-        "time": datetime.now().strftime("%H:%M:%S")
-    }
-
-    prediction_history.append(record)
-
-    return record
+    return result
 
 
-# -----------------------------
-# Prediction History API
-# -----------------------------
+# ==============================
+# HISTORY API
+# ==============================
 @app.get("/api/v1/history")
-def history():
+def get_history():
     return prediction_history
 
 
-# -----------------------------
-# Root API
-# -----------------------------
-@app.get("/")
-def home():
-    return {"message": "IoT Water Monitoring Backend Running"}
+# ==============================
+# AUTO PREDICTION (SIMULATION)
+# ==============================
+import random
+
+@app.get("/api/v1/auto-predict")
+def auto_predict():
+
+    # Simulated sensor data
+    distance = random.uniform(20, 70)
+    temperature = random.uniform(50, 90)
+
+    input_data = [[distance, temperature]]
+
+    prediction = model.predict(input_data)[0]
+    confidence = max(model.predict_proba(input_data)[0])
+
+    tank_height = 100
+    water_level = tank_height - distance
+    water_level = max(0, water_level)
+
+    volume_liters = water_level * 10
+
+    result = {
+        "time": datetime.now().strftime("%H:%M:%S"),
+        "distance": round(distance, 2),
+        "temperature": round(temperature, 2),
+        "prediction": prediction,
+        "confidence": round(confidence, 2),
+        "water_level": round(water_level, 2),
+        "volume_liters": round(volume_liters, 2)
+    }
+
+    prediction_history.append(result)
+
+    return result
